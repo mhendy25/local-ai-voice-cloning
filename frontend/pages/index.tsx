@@ -4,24 +4,29 @@ export default function Home() {
   const [inputText, setInputText] = useState("");
   const [result, setResult] = useState("");
 
-  interface ProcessResponse {
-    message: string;
-  }
+  // interface ProcessResponse {
+  //   voice: AudioData;
+  // }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/process", {
+      const response = await fetch("http://127.0.0.1:8000/clone-voice", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ item: inputText }),
+        body: JSON.stringify({ text: inputText }),
       });
 
-      const data: ProcessResponse = await response.json();
-      setResult(data.message);
+      if (response.ok) {
+        const blob = await response.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        setResult(audioUrl);
+      } else {
+        console.error("Failed to get audio");
+      }
     } catch (error) {
       console.error("Error:", error);
     }
@@ -38,7 +43,7 @@ export default function Home() {
         />
         <button type="submit">Submit</button>
       </form>
-      {result && <div style={{ marginTop: "1rem" }}>Result: {result}</div>}
+      {result && <audio controls src={result}></audio>}
     </div>
   );
 }
