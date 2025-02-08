@@ -1,4 +1,5 @@
 import { useState } from "react";
+import NavBar from "@/components/navbar";
 
 export default function Home() {
   const [inputText, setInputText] = useState("");
@@ -12,13 +13,16 @@ export default function Home() {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/clone-voice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text: inputText }),
-      });
+      const response = await fetch(
+        "http://127.0.0.1:8000/clone-voice-from-text",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: inputText }),
+        }
+      );
 
       if (response.ok) {
         const blob = await response.blob();
@@ -33,17 +37,22 @@ export default function Home() {
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          placeholder="Enter text"
-        />
-        <button type="submit">Submit</button>
-      </form>
-      {result && <audio controls src={result}></audio>}
-    </div>
+    <>
+      <NavBar />
+      <div style={{ padding: "2rem" }}>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="Enter text"
+          />
+          <button className="primary" type="submit">
+            Submit
+          </button>
+        </form>
+        {result && <audio controls src={result}></audio>}
+      </div>
+    </>
   );
 }

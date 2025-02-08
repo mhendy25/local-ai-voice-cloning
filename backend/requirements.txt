@@ -100,6 +100,7 @@ pycparser==2.22
 pydantic==2.10.6
 pydantic_core==2.27.2
 Pygments==2.19.1
+PyMuPDF==1.25.3
 pynndescent==0.5.13
 pyparsing==3.2.1
 pypinyin==0.53.0
