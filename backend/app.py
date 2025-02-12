@@ -26,34 +26,39 @@ app.add_middleware(
 
 @app.post("/upload-voice")
 async def upload_voice(file: UploadFile = File(...)):
-    with open("./voices/input.wav", "wb") as buffer:
+    print("the file is: ", file)
+    file_location = "./voices/input.wav"
+    with open(file_location, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    return {"filename": "input.wav"}
+    return {"filename": file.filename}
 
 
 class Text(BaseModel):
     text: str
+class UserInput(BaseModel):
+    text: str
+    model: str
 @app.post("/clone-voice-from-text")
-async def process(text: Text):
-    print("the text is: ", text.text)
+async def process(user_input: UserInput):
+    print("the user input is: ", user_input)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # Init TTS
     tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
     # Text to speech to a file
-    tts.tts_to_file(text=text.text, speaker_wav="voices/input.wav", language="en", file_path= "./voices/output.wav")
+    tts.tts_to_file(text=user_input.text, speaker_wav="voices/input.wav", language="en", file_path= "./voices/output.wav")
     # voice = . # code to clone the voice
     return FileResponse("./voices/output.wav", media_type="audio/mpeg", filename="output.wav")
 
-@app.post("/get-sample-voice-from-text")
-async def process(text: Text):
-    print("the text is: ", text.text)
+@app.post("/built-in-voice-sample")
+async def process(speaker: str):
+    print("the speaker is: ", speaker)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # Init TTS
     tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
-    print("the speakers are", tts.speakers)
+    # print("the speakers are", tts.speakers)
 
     # Text to speech to a file
-    tts.tts_to_file(text=text.text, speaker = tts.speakers[0], language="en", file_path= "./voices/output.wav")
+    tts.tts_to_file(text=data.text, speaker = data.speaker, language="en", file_path= "./voices/output.wav")
     # voice = . # code to clone the voice
     return FileResponse("./voices/output.wav", media_type="audio/mpeg", filename="output.wav")
 
@@ -68,5 +73,5 @@ async def get_text_from_document():
     doc = pymupdf.open("./documents/input.pdf") 
     text = ""
     for i in range(doc.page_count): 
-        text += f"Page {i}: {doc[i].get_text()}" + "\n"
+        text += f"Page {i+1}: {doc[i].get_text()}" + "\n"
     return {"text": text}

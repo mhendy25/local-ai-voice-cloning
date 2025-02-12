@@ -25,3 +25,7 @@ button.primary {
   background-color: var(--primary-button-bg);
   color: var(--foreground);
 }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px;
+}

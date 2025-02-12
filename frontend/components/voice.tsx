@@ -86,7 +86,7 @@ export default function NavBar() {
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
         setSelectedVoice({
-          name: "Recording.wav",
+          name: "audio.wav",
           type: "recording",
           content: blob,
         });
@@ -155,25 +155,103 @@ export default function NavBar() {
   };
 
   useEffect(() => {
-    setBuiltInVoices(["man.wav", "woman1.wav", "woman2.wav"]);
+    setBuiltInVoices([
+      "Abrahan Mack.wav",
+      "Andrew Chipper.wav",
+      "Barbora MacLean.wav",
+    ]);
   }, []);
-  const handleBuiltInVoiceSelect = (voice: string) => {
+  const handleBuiltInVoiceSelect = async (speaker: string) => {
+    console.log("the built-in voice string is", speaker);
     setSelectedVoice({
-      name: voice,
+      name: speaker,
       type: "built-in",
-      content: voice,
+      content: speaker,
     });
-  };
-  console.log("selectedVoice", selectedVoice);
+    const formData = new FormData();
+    formData.append("speaker", speaker);
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/built-in-voice-sample",
+        {
+          method: "POST",
+          body: JSON.stringify({ speaker }),
+        }
+      );
 
+      if (!response.ok) {
+        throw new Error("Failed to upload voice");
+      }
+
+      const result = await response.json();
+      console.log("Upload successful:", result);
+    } catch (error) {
+      console.error("Error uploading voice:", error);
+      alert("Error uploading voice. Please try again.");
+    }
+  };
+  useEffect(() => {
+    console.log("selectedVoice updated:", selectedVoice);
+  }, [selectedVoice]);
+  const uploadVoice = async () => {
+    if (!selectedVoice) {
+      alert("No voice selected.");
+      return;
+    }
+    console.log("selected voice:", selectedVoice);
+
+    const formData = new FormData();
+    if (selectedVoice.content instanceof Blob) {
+      // Convert Blob to File if it's not already a File
+      const file =
+        selectedVoice.content instanceof File
+          ? selectedVoice.content
+          : new File([selectedVoice.content], selectedVoice.name, {
+              type: selectedVoice.content.type || "audio/wav",
+            });
+      console.log("file", file);
+      formData.append("file", file);
+    } else if (typeof selectedVoice.content === "string") {
+      // Convert string content to File
+      const file = new File([selectedVoice.content], selectedVoice.name, {
+        type: "audio/wav",
+      });
+      console.log("file", file);
+      formData.append("file", file);
+    }
+
+    console.log("the form data is", formData);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/upload-voice", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload voice");
+      }
+
+      const result = await response.json();
+      console.log("Upload successful:", result);
+    } catch (error) {
+      console.error("Error uploading voice:", error);
+      alert("Error uploading voice. Please try again.");
+    }
+  };
   return (
-    <div className="flex flex-col align-center justify-center">
-      <h1 className="text-3xl font-bold text-center mt-4">
+    <div
+      id="voice-container"
+      className="flex flex-col align-center justify-center mx-8"
+    >
+      <h1 className="text-3xl font-bold text-center my-4">
         Appreciate Your Voice
       </h1>
       <div className="flex flex-row grid grid-cols-3 mt-1 gap-4">
         <div className="flex flex-col justify-between">
-          <h2 className="text-center">Upload Voice</h2>
+          <h2 className="text-xl font-semibold text-center mb-4 py-2 px-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md">
+            Upload Voice
+          </h2>
           <div
             id="drag-and-drop"
             onDrop={handleDrop}
@@ -234,8 +312,11 @@ export default function NavBar() {
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-center">
-          <h2 className="text-center">Use Mic</h2>
+        <div className="flex flex-col">
+          {/* todo */}
+          <h2 className="text-xl font-semibold text-center mb-4 py-2 px-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md">
+            Use Mic
+          </h2>
           <div
             id="use-mic"
             className="p-4 text-center flex flex-col items-center bg-gradient-to-b from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-colors w-full h-full rounded-lg"
@@ -319,7 +400,11 @@ export default function NavBar() {
           </div>
         </div>
         <div className="flex flex-col">
-          <h2 className="text-center">Try Built-in Voice</h2>
+          {/* todo */}
+
+          <h2 className="text-xl font-semibold text-center mb-4 py-2 px-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md">
+            Try Built-in Voice
+          </h2>
           <div
             id="built-in-voices"
             className="flex flex-col space-y-4 p-4 border-dashed border-2 border-gray-400"
@@ -328,7 +413,7 @@ export default function NavBar() {
               <div
                 key={index}
                 className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${
-                  selectedVoice === voice
+                  selectedVoice?.name === voice
                     ? "bg-blue-100 border-2 border-blue-500"
                     : "hover:bg-gray-100"
                 }`}
@@ -336,7 +421,7 @@ export default function NavBar() {
               >
                 <li className="text-sm text-gray-600 mb-2 flex justify-between items-center">
                   <span>{voice}</span>
-                  {selectedVoice === voice && (
+                  {selectedVoice?.name === voice && (
                     <span className="text-blue-500 text-xs font-medium">
                       Selected
                     </span>
@@ -357,47 +442,64 @@ export default function NavBar() {
           </div>
         </div>
       </div>
-      {selectedVoice && (
-        <div className="mt-8 w-full max-w-md mx-auto">
-          <h2 className="text-xl font-semibold text-center mb-4">
-            Selected Voice
-          </h2>
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-gray-700">{selectedVoice.name}</span>
-              <button
-                onClick={handleCancel}
-                className="text-red-500 hover:text-red-600"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                  onClick={handleCancel}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <audio
-              controls
-              src={
-                selectedVoice.type === "built-in"
-                  ? `/built-in-voices/${selectedVoice.content}`
-                  : URL.createObjectURL(selectedVoice.content as Blob)
-              }
-              className="w-full"
-            />
-          </div>
+      <div className="mt-8 w-full max-w-md mx-auto">
+        <h2 className="text-xl font-semibold text-center mb-4">
+          {selectedVoice ? "Selected Voice" : "Select a voice from above"}
+        </h2>
+        <div className="p-6 bg-white rounded-lg shadow-md">
+          {selectedVoice ? (
+            <>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-gray-700">{selectedVoice.name}</span>
+                <div className="flex flex-row justify-center items-center">
+                  <button
+                    onClick={uploadVoice}
+                    disabled={!selectedVoice}
+                    className="px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors disabled:opacity-50"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="text-red-500 hover:text-red-600"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        className="w-6 h-6 cursor-pointer hover:text-red-800 transition-colors"
+                        onClick={handleCancel}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+              </div>
+              <audio
+                controls
+                src={
+                  selectedVoice.type === "built-in"
+                    ? `/built-in-voices/${selectedVoice.content}`
+                    : URL.createObjectURL(selectedVoice.content as Blob)
+                }
+                className="w-full"
+              />
+            </>
+          ) : (
+            <p className="text-gray-500 text-center">
+              Voice not selected yet...
+            </p>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
