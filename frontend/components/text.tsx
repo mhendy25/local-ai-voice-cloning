@@ -1,6 +1,10 @@
 import { useState, ChangeEvent } from "react";
 
-export default function Text() {
+interface TextProps {
+  onTextChange: (text: string) => void;
+}
+
+export default function Text({ onTextChange }: TextProps) {
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState<string>("");
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -63,7 +67,9 @@ export default function Text() {
     }
   };
   const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    setText(e.target.value);
+    const newText = e.target.value;
+    setText(newText);
+    onTextChange(newText); // Pass text up to parent
   };
 
   const handleCancel = () => {

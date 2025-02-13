@@ -1,8 +1,12 @@
 import { useState } from "react";
+interface ModelProps {
+  text: string;
+}
 
-export default function Model() {
+export default function Model({ text }: ModelProps) {
   const [outputVoice, setOutputVoice] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
+
   const sendTextAndModelToAPI = async () => {
     const textArea = document.getElementById(
       "text-area"
@@ -59,10 +63,17 @@ export default function Model() {
             {/* Sample Row */}
             <tr>
               <td className="border border-gray-300 px-4 py-2 text-center">
-                text-to-speech
+                tts (text-to-speech) coqui
               </td>
               <td className="border border-gray-300 px-4 py-2 text-center">
-                2 minutes
+                {text ? (
+                  `${((text.split(".").length * 45) / 60).toFixed(2)} - ${(
+                    (text.split(".").length * 75) /
+                    60
+                  ).toFixed(2)} minutes`
+                ) : (
+                  <span className="text-gray-500">Text not selected</span>
+                )}
               </td>
               <td className="border border-gray-300 px-4 py-2 text-center">
                 medium
